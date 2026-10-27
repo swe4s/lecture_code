@@ -1,0 +1,10 @@
+# Same pipeline, tiny committed data. This is merged on top of config.yaml,
+# so the URLs are blanked to turn off the download rules.
+co2_url: ""
+gdp_url: ""
+co2_file: "test/data/co2.csv"
+gdp_file: "test/data/gdp.csv"
+out_dir: "test_out"
+countries:
+  - Brazil
+  - Canada

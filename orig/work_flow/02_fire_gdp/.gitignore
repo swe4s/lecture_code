@@ -1,0 +1,7 @@
+data/
+results/
+test_out/
+ssshtest
+dag.png
+.snakemake/
+__pycache__/

@@ -1,0 +1,89 @@
+# Forest fires vs. GDP, one country at a time.
+#
+#   snakemake -c1 -n                 # what would run?
+#   snakemake -c4                    # run it, 4 jobs at a time
+#   snakemake -c1 test               # unit + functional tests
+#   snakemake --dag | dot -Tpng > dag.png
+#   snakemake -c1 --config countries='["Chile"]'
+
+configfile: "config.yaml"
+
+# Scripts are listed as inputs so that editing one reruns the jobs that use
+# it. Snakemake only tracks the shell string, not the files it calls.
+
+OUT = config["out_dir"]
+COUNTRIES = config["countries"]
+
+
+rule all:
+    input:
+        expand(OUT + "/plots/{country}.png", country=COUNTRIES),
+        OUT + "/correlations.tsv"
+
+
+# Only define the downloads when the config gives URLs. config_test.yaml
+# blanks them, so the committed test data can never be overwritten.
+if config.get("co2_url"):
+    rule download_co2:
+        output:
+            config["co2_file"]
+        params:
+            url=config["co2_url"]
+        shell:
+            'curl -sL "{params.url}" -o {output}'
+
+if config.get("gdp_url"):
+    rule download_gdp:
+        output:
+            config["gdp_file"]
+        params:
+            url=config["gdp_url"]
+        shell:
+            'curl -sL "{params.url}" -o {output}'
+
+
+rule fire_gdp:
+    input:
+        co2=config["co2_file"],
+        gdp=config["gdp_file"],
+        script="src/get_fire_gdp.py",
+        lib="src/fire_gdp.py"
+    output:
+        OUT + "/tables/{country}.tsv"
+    log:
+        OUT + "/logs/fire_gdp/{country}.log"
+    shell:
+        "python {input.script} --co2_file {input.co2} "
+        "--gdp_file {input.gdp} --country {wildcards.country} "
+        "--out_file {output} 2> {log}"
+
+
+rule plot:
+    input:
+        table=OUT + "/tables/{country}.tsv",
+        script="src/scatter.py"
+    output:
+        OUT + "/plots/{country}.png"
+    log:
+        OUT + "/logs/plot/{country}.log"
+    shell:
+        "python {input.script} --in_file {input.table} --out_file {output} "
+        "--x_col 1 --y_col 2 --title {wildcards.country} "
+        "--x_label 'Forest fire emissions (kt CO2)' "
+        "--y_label 'GDP (millions, local currency)' 2> {log}"
+
+
+rule correlate:
+    input:
+        tables=expand(OUT + "/tables/{country}.tsv", country=COUNTRIES),
+        script="src/correlate.py"
+    output:
+        OUT + "/correlations.tsv"
+    shell:
+        "python {input.script} --in_files {input.tables} > {output}"
+
+
+rule test:
+    shell:
+        "python -m unittest discover -s test/unit && "
+        "bash test/func/test_fire_gdp.sh"

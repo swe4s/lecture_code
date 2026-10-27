@@ -1,0 +1,6 @@
+counts/
+top_words/
+logs/
+summary.txt
+dag.png
+.snakemake/

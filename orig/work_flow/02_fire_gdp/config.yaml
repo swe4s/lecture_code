@@ -1,0 +1,14 @@
+# Where the data comes from and where it goes
+co2_url: "https://docs.google.com/uc?export=download&id=1AsXP_OGs1O_TDeXiZjk3fYV1SrG4vwXF"
+gdp_url: "https://docs.google.com/uc?export=download&id=19YEPysdnK7VCXuAe9Og9pwYkNT5CbQzr"
+co2_file: "data/Agrofood_co2_emission.csv"
+gdp_file: "data/IMF_GDP.csv"
+out_dir: "results"
+
+# One set of results per country. Names must match both files exactly.
+countries:
+  - Brazil
+  - Indonesia
+  - Australia
+  - Canada
+  - Mexico
